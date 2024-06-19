@@ -1,0 +1,44 @@
+body {
+    background-color: #f8f9fa;
+}
+
+.container {
+    max-width: 600px;
+    background: #1c1c1c;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-top: 23px;
+}
+
+h2 {
+    color: #72d5ee;
+}
+
+label {
+    font-weight: bold;
+}
+
+form {
+    margin-top: 20px;
+}
+
+button {
+    margin-top: 10px;
+}
+
+.text-center a {
+    color: #007bff;
+    text-decoration: none;
+    
+}
+
+.text-center a:hover {
+    text-decoration: underline;
+}
+
+.w-100 {
+    width: inherit;
+}
+
+

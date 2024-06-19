@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Polygon Details</title>
+</head>
+<body>
+    <h1>Details for Polygon: {{ polygon.polygon_id }}</h1>
+
+    <h2>NDVI Values</h2>
+    <table border="1">
+        <tr>
+            <th>Date</th>
+            <th>Value</th>
+        </tr>
+        {% for value in ndvi_values %}
+        <tr>
+            <td>{{ value.date }}</td>
+            <td>{{ value.value|floatformat:3 }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h2>NDMI Values</h2>
+    <table border="1">
+        <tr>
+            <th>Date</th>
+            <th>Value</th>
+        </tr>
+        {% for value in ndmi_values %}
+        <tr>
+            <td>{{ value.date }}</td>
+            <td>{{ value.value|floatformat:3 }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h2>Meteorological Data</h2>
+<table border="1">
+    <tr>
+        <th>Date</th>
+        <th>Time</th>
+        <th>Temperature  &nbsp °C</th>
+        <th>Humidity &nbsp %</th>
+        <th>Rainfall &nbsp ~mm</th>
+    </tr>
+    {% for data in metrological_data %}
+    <tr>
+        <td>{{ data.date|date:"Y-m-d" }}</td>
+        <td>{{ data.date|time:"H:i:s" }}</td>
+        <td>{{ data.temperature_data|floatformat:3 }}</td>
+        <td>{{ data.humidity_data|floatformat:3 }}</td>
+        <td>{{ data.rainfall_data|floatformat:3 }}</td>
+    </tr>
+    {% endfor %}
+</table>
+</body>
+</html>

@@ -1,0 +1,624 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Geo Spatial Analysis</title>
+  <link rel="stylesheet" type="text/css" href="https://bootswatch.com/5/quartz/bootstrap.rtl.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-search/dist/leaflet-search.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+  <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
+
+  
+  <style>
+    #map {
+      height: 490px; /* Adjust the map height */
+    }
+    .dropdowns {
+      display: flex;
+      margin: 10px;
+    }
+    .dropdowns select {
+      
+      border-radius: 100px;
+      margin-right: 50px;
+    }
+    .image-container {
+      display: flex;
+      flex-wrap: wrap;
+    }
+    .image-container img {
+      margin: 5px;
+      max-width: 80%;
+      height: auto;
+    }
+
+    #id01 {
+      z-index: 1000; /* Ensure the modal appears above other elements */
+      position: absolute;
+      left: 50%; /* Center horizontally */
+      top: 50%; /* Center vertically */
+      transform: translate(-50%, -50%); /* Center the modal */
+      
+    }
+
+    .image-row {
+      display: flex;
+      margin-bottom: 20px;
+    }
+
+    .image-column {
+      flex: 0 0 19%;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .image-column img {
+      max-width: auto;
+    }
+
+    .w3-container, .w3-panel {
+      padding: 0.01em 16px;
+      text-align: center;
+      margin-top: -41px;
+    }
+
+    #legend-container {
+      margin-top: 20px;
+      text-align: center;
+    }
+    #ndvi-legend {
+      display: flex;
+      height: 20px;
+      width: 100%;
+      background: linear-gradient(to right, 
+          #000000 0%, #000000 4.17%, 
+          #FF0000 4.17%, #FF0000 12.5%, 
+          #FF7F00 12.5%, #FF7F00 20.83%, 
+          #FFFF00 20.83%, #FFFF00 29.17%, 
+          #BFFF00 29.17%, #BFFF00 37.5%, 
+          #80FF00 37.5%, #80FF00 45.83%, 
+          #40FF00 45.83%, #40FF00 54.17%, 
+          #00FF00 54.17%, #00FF00 62.5%, 
+          #00BF00 62.5%, #00BF00 70.83%, 
+          #008000 70.83%, #008000 79.17%, 
+          #004000 79.17%, #004000 87.5%, 
+          #002000 87.5%, #002000 100%);
+    }
+    #ndvi-legend-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 5px;
+      font-size: 12px;
+    }
+    #ndvi-legend-labels span {
+      width: 8.33%;
+      text-align: center;
+    }
+
+    button.w3-button.w3-purple {
+      border-radius: 100px;
+      height: 34px;
+      margin-top: 5px;
+  }
+  #polygonDropdown,
+#stateDropdown {
+  display: inline-block; /* To display them in a row */
+}
+
+#polygonSelect,
+#stateSelect {
+  height: 40px; /* Set the desired height */
+  width: 200px; /* Set the desired width */
+  background-color: #f26be0; /* Background color */
+  color: #333; /* Text color */
+  border: 4px solid #3aa1b5; /* Border color */
+  
+  padding: 5px; /* Padding inside the dropdown */
+}
+#stateDropdown{
+  height: 40px;
+  background-color: #f29e55; /* Background color */
+  color: #333; /* Text color */
+  border: 4px solid #8080d9; /* Border color */
+  
+  padding: 5px; /* Padding inside the dropdown */
+}
+
+.navbar-toggler {
+  background-color: #474544; /* Set the background color to black */
+  border: none; /* Remove the default border */
+}
+
+
+
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-dark bg-transparent">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggleExternalContent" aria-controls="navbarToggleExternalContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="dropdowns">
+      <div id="polygonDropdown">
+        <select id="polygonSelect">
+          <option value="">Select a polygon</option>
+        </select>
+      </div>
+      <select id="stateDropdown">
+        <option value="">Select a State</option>
+      </select>
+      <button onclick="document.getElementById('id01').style.display='block'" class="w3-button w3-purple">NDVI IMAGES</button>
+    </div>
+    <div class="collapse navbar-collapse" id="navbarToggleExternalContent">
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item active">
+          <a class="nav-link" href="{% url 'ndvi' %}">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'update' %}">Profile</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'changepassword' %}">Change Password</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div id="id01" class="w3-modal">
+  <div class="w3-modal-content">
+    <div class="w3-container">
+      <span onclick="document.getElementById('id01').style.display='none'" class="w3-button w3-display-topright">&times;</span>
+      <div id="modal-content">
+        {% if polygon_images %}
+          {% for item in polygon_images %}
+            <h3>Polygon: {{ item.polygon.polygon_id }}</h3>
+            <div class="image-container">
+              {% if item.images %}
+                <div class="image-row">
+                  {% for image in item.images %}
+                    <div class="image-column">
+                      <img src="{{ image.image.url }}" alt="NDVI Image">
+                      <p>Date: {{ image.date }}</p>
+                    </div>
+                    {% if forloop.counter|divisibleby:5 %}
+                      </div><div class="image-row">
+                    {% endif %}
+                  {% endfor %}
+                </div>
+              {% else %}
+                <p>No images for this polygon.</p>
+              {% endif %}
+            </div>
+          {% endfor %}
+        {% else %}
+          <p>No images available.</p>
+        {% endif %}
+        <div id="legend-container">
+          <h4>NDVI Legend</h4>
+          <div id="ndvi-legend"></div>
+          <div id="ndvi-legend-labels">
+            <span>-0.5</span>
+            <span>0</span>
+            <span>0.1</span>
+            <span>0.2</span>
+            <span>0.3</span>
+            <span>0.4</span>
+            <span>0.5</span>
+            <span>0.6</span>
+            <span>0.7</span>
+            <span>0.8</span>
+            <span>0.9</span>
+            <span>1</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="map"></div> <!-- Map element -->
+
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Popper.js -->
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+
+<!-- Bootstrap -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<!-- Leaflet -->
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+<!-- Leaflet Draw -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
+<!-- Leaflet Search -->
+<script src="https://unpkg.com/leaflet-search/dist/leaflet-search.min.js"></script>
+
+
+<!-- Plotly -->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.7.5/proj4.js"></script>
+
+
+
+<script>
+  function updatePopupContent(layer, graphData) {
+    // Check if the popup chart element exists
+    const popupContent = '<button id="ndviButton"style=" margin:10px; Background-color:green; color:white;">NDVI</button>' +
+    '<button id="ndmiButton" style=" Background-color:brown; color:white;">NDMI</button>' +
+    '<div id="popupChart" style="width: 750px; height: 350px;"></div>';
+      layer.getPopup().setContent(popupContent);
+    
+    if ($('#popupChart').length) {
+      // Clear any existing chart data
+      Plotly.newPlot('popupChart', [], {});
+  
+      // Handle potential errors in data
+      if (!graphData || !graphData.ndviValues || !graphData.ndmiValues) {
+        console.error("Missing data in graphData object.");
+        layer.getPopup().setContent("Error: No data available for this polygon.");
+        return;
+      }
+  
+      // Create traces for each unique year
+      const ndviData = createTraces(graphData.ndviValues, 'ndvi_scores');
+      const ndmiData = createTraces(graphData.ndmiValues, 'ndmi_scores');
+  
+      const layout = {
+        xaxis: {
+          title: 'Month',
+          type: 'date',
+          tickformat: '%b', // Format ticks to show abbreviated month name
+        },
+        yaxis: {
+          title: 'NDVI',
+        },
+        plot_bgcolor: 'lightgray',
+        showlegend: true,
+      };
+  
+      Plotly.react('popupChart', ndviData, layout);
+  
+      // Add event listeners to the buttons
+      $('#ndviButton').click(function() {
+        layout.yaxis.title = 'NDVI';
+        Plotly.react('popupChart', ndviData, layout);
+      });
+  
+      $('#ndmiButton').click(function() {
+        layout.yaxis.title = 'NDMI';
+        Plotly.react('popupChart', ndmiData, layout);
+      });
+    } else {
+      console.error("Popup chart not found");
+    }
+  }
+  
+  function createTraces(graphData, scoreType) {
+    const years = new Set(graphData.dates.map(date => new Date(date).getFullYear())); // Extract unique years
+    const data = [];
+    for (const year of years) {
+      const x = [];
+      const y = [];
+  
+      // Filter data for the current year
+      for (let i = 0; i < graphData.dates.length; i++) {
+        if (new Date(graphData.dates[i]).getFullYear() === year) {
+          // Adjust the date to start from the same month each year
+          const date = new Date(graphData.dates[i]);
+          date.setFullYear(2000); // Set all years to 2000
+          x.push(date);
+          y.push(graphData[scoreType][i]);
+        }
+      }
+  
+      data.push({
+        x,
+        y,
+        mode: 'lines+markers',
+        type: 'scatter',
+        name: year.toString(),
+        line: { shape: 'spline' },
+        hovertemplate: 'Year: ' + year + '<br>Month: %{x|%b}<br>' + scoreType.toUpperCase() + ': %{y}',
+      });
+    }
+    return data;
+  }
+
+ // Function to populate the dropdown with drawn polygons
+ function populatePolygonDropdown(polygons) {
+  var dropdown = document.getElementById("polygonSelect");
+  dropdown.innerHTML = '<option value="">Select a polygon</option>';
+  
+  polygons.forEach(function(polygon, index) {
+    var option = document.createElement("option");
+    option.text = "Polygon " + (index + 1);
+    option.value = index;
+    dropdown.appendChild(option);
+  });
+}
+
+
+
+
+  var map = L.map("map").setView([20.5937, 78.9629], 5);  // Default center and zoom level
+
+  // Base layers for the Leaflet map
+  var hybridBasemap = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v11/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiYXZpbmFzaG51a2F0aG90aSIsImEiOiJjbHI0eW5xcncxZnptMnBwOGcxbXFnMm16In0.nn15-Gg4Wu0yPxgTIhj6KQ', {
+    maxZoom: 20,
+    id: 'mapbox://styles/avinashnukathoti/clvbyo2r000vv01qu10n6bike',
+    tileSize: 512,
+    zoomOffset: -1,
+    attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+  });
+
+  var googleHybrid = L.tileLayer('http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
+    maxZoom: 20,
+    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+    attribution: 'Map data &copy; <a href="https://www.google.com/earth/">Google Earth</a>',
+  }).addTo(map);
+
+  var geojsonLayer;
+  var statesData;
+
+ // Layer control to switch between base layers
+ var baseLayers = {
+  "Satellite Streets": hybridBasemap,
+  "Google Hybrid": googleHybrid,
+};
+
+  // Set up Leaflet.Draw for drawing polygons
+  var drawnItems = new L.FeatureGroup();  // Group to hold drawn items
+  map.addLayer(drawnItems);
+
+  var drawControl = new L.Control.Draw({
+    edit: {
+      featureGroup: drawnItems,
+    },
+    draw: {
+      polygon: true,  // Enable polygon drawing
+      polyline: false,
+      rectangle: true,
+      circle: false,
+      marker: false,
+    },
+  });
+
+  map.addControl(drawControl);
+
+  // Handle the event when a new polygon is drawn
+  map.on(L.Draw.Event.CREATED, function (event) {
+    var layer = event.layer;
+    var coordinates = layer.getLatLngs()[0];  // Extract coordinates
+
+    var data = {
+      'coordinates': coordinates.map(coord => ({ 'latitude': coord.lat, 'longitude': coord.lng })),
+    };
+
+    // Send data to Django backend to save the polygon
+    $.ajax({
+      type: "POST",
+      url: "/save_polygon/",
+      data: JSON.stringify(data),
+      contentType: "application/json",
+      success: function (response) {
+        var center = layer.getBounds().getCenter(); // Get center of the polygon
+      
+        layer.bindPopup("Loading graph..."); // Placeholder message
+        layer.on('popupopen', function () {
+          var graphData = {
+            years: response.graph_json.years,
+            months: response.graph_json.months,
+            ndvi_scores: response.graph_json.ndvi_scores,
+          };
+      
+          // Ensure the popup content is updated after the AJAX call completes
+          setTimeout(function() {
+            updatePopupContent(layer, graphData); // Update with Plotly chart
+            Plotly.relayout('popupChart', { // Resize the chart to fit its container
+              'xaxis.autorange': true,
+              'yaxis.autorange': true
+            });
+          }, 0);
+        });
+      
+        layer.openPopup(); // Open the popup to show the chart
+        location.reload();
+      },
+      error: function (xhr, textStatus, errorThrown) {
+        console.error("Error saving polygon:", xhr.responseText);
+        alert("Error saving polygon. Please try again.");
+      },
+    });
+
+    drawnItems.addLayer(layer);  // Add the drawn polygon to the map
+  });
+  var overlays = {};
+
+  var overlayGroup = L.layerGroup();
+  // Get existing polygons and add them to the map
+$.ajax({
+  type: "GET",
+  url: "/get_user_polygons/",
+  success: function (response) {
+    response.polygons.forEach(function (polygonData, index) {
+      var coordinates = polygonData.coordinates.map(coord => [coord.longitude, coord.latitude]);
+      var geojson_polygon = {
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [coordinates],  // GeoJSON format
+        },
+        "properties": {},
+      };
+
+      var polygonLayer = L.geoJSON(geojson_polygon, {
+        style: function (feature) {
+          return {
+            fill: false, // No fill
+            color: '#032dab', // Border color
+            weight: 2, // Border weight
+            opacity: 1 // Border opacity
+          };
+        }
+      }).addTo(drawnItems);
+
+
+      var bbox = polygonLayer.getBounds();
+      var min = proj4('EPSG:4326', 'EPSG:3857', [bbox.getWest(), bbox.getSouth()]);
+      var max = proj4('EPSG:4326', 'EPSG:3857', [bbox.getEast(), bbox.getNorth()]);
+      var bboxString = min.concat(max).join(",");
+
+      var wmsUrl = 'https://sh.dataspace.copernicus.eu/ogc/wms/42198960-5491-4d3e-bcf0-a7d415745f0f?';
+      var wmsParams = {
+        service: 'WMS',
+        request: 'GetMap',
+        layers: 'NDVI',
+        styles: '',
+        format: 'image/png',
+        transparent: true,
+        version: '1.3.0',
+        bbox: bboxString,
+        width: 512,
+        height: 512,
+        srs: 'EPSG:3857'
+      };
+
+      // Construct the full WMS request URL
+      var wmsRequestUrl = wmsUrl + L.Util.getParamString(wmsParams);
+
+      // Use L.ImageOverlay to clip the WMS layer to the bounding box
+      var wmsOverlay = L.imageOverlay(wmsRequestUrl, bbox, { opacity: 0.9 }).addTo(overlayGroup);
+
+      // Fit the map to the bounds of the polygon
+      map.fitBounds(bbox);
+
+      // Create a marker for the polygon
+      var marker = L.marker(L.geoJSON(geojson_polygon).getBounds().getCenter()).addTo(drawnItems);
+      
+      marker.bindPopup("Loading graph...");  // Placeholder message
+
+      // Update popup content with graph data on click
+      marker.on('popupopen', function () {
+        updatePopupContent(marker, polygonData); // Update with Plotly chart
+      });
+    });
+    overlays["NDVI"] = overlayGroup;
+    populatePolygonDropdown(response.polygons);
+
+    L.control.layers(baseLayers, overlays).addTo(map);
+  },
+  error: function (xhr, textStatus, errorThrown) {
+    console.error("Error fetching polygons:", xhr.responseText);
+  },
+});
+document
+        .getElementById("polygonSelect")
+        .addEventListener("change", function () {
+          var selectedIndex = this.value;
+          if (selectedIndex !== "") {
+            var polygonLayer = drawnItems.getLayers()[selectedIndex];
+            var bounds = polygonLayer.getBounds();
+            if (bounds.isValid()) {
+              map.fitBounds(bounds);
+              polygonLayer.openPopup();
+            } else {
+              console.error("Invalid bounds for the selected polygon layer.");
+            }
+          }
+        });
+
+
+  // Function to display Plotly chart in a popup
+  function showGraphPopup(layer, graphData) {
+    // Get the existing popup element from the polygon layer
+    var popup = layer.getPopup();
+  
+    // Set a placeholder message if the popup is empty
+    if (!popup.getContent()) {
+      popup.setContent("Loading graph...");
+    }
+  
+    // Update the popup content with the graph when it opens
+    popup.on('popupopen', function () {
+      updatePopupContent(layer, graphData); // Update with Plotly chart
+    });
+  
+    // Open the existing popup
+    layer.openPopup();
+  }
+
+  // Load and display GeoJSON data for India states
+  $.getJSON("{% static 'geojson/india_state.geojson' %}", function(data) {
+    statesData = data;
+
+    // Populate dropdown with state names
+    var stateNames = data.features.map(function(feature) {
+      return feature.properties.NAME_1; // Assuming 'NAME_1' is the property for state names
+    });
+
+    stateNames.forEach(function(name) {
+      $('#stateDropdown').append(new Option(name, name));
+    });
+  });
+
+  // Style for GeoJSON layer
+  function style(feature) {
+    return {
+      fill: false,
+      color: '#1d64f2', // Border color
+      weight: 3, // Border weight
+      opacity: 1,
+      fillOpacity: 0 // No fill opacity
+    };
+  }
+
+  // Function to filter and display selected state
+  function displayState(stateName) {
+    if (geojsonLayer) {
+      map.removeLayer(geojsonLayer);
+    }
+
+    if (stateName === "") {
+      // Do nothing if no state is selected
+      return;
+    } else {
+      var selectedState = {
+        type: "FeatureCollection",
+        features: statesData.features.filter(function(feature) {
+          return feature.properties.NAME_1 === stateName;
+        })
+      };
+
+      geojsonLayer = L.geoJson(selectedState, { style: style }).addTo(map);
+
+      // Zoom to the selected state
+      map.fitBounds(geojsonLayer.getBounds());
+    }
+  }
+
+  // Event listener for dropdown change
+  $('#stateDropdown').change(function() {
+    var selectedState = $(this).val();
+    displayState(selectedState);
+  });
+</script>
+
+
+
+</body>
+</html>
